@@ -2,9 +2,14 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadsDir)) {
+import os from 'os';
+
+// Use the OS temp directory (which is /tmp on Vercel/Linux and temp folder on Windows)
+// Vercel only allows writing to the /tmp directory
+const uploadsDir = process.env.VERCEL ? "/tmp" : path.join(process.cwd(), "uploads");
+
+// Ensure directory exists only if NOT on Vercel (Vercel's /tmp always exists)
+if (!process.env.VERCEL && !fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
