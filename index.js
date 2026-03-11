@@ -12,8 +12,26 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-    origin: [process.env.CLIENT_URL || 'http://localhost:5173', process.env.ADMIN_URL || 'http://localhost:5174'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+
+        // Normalize allowed origins by removing trailing slashes
+        const allowedOrigins = [
+            process.env.CLIENT_URL,
+            process.env.ADMIN_URL,
+            'http://localhost:5173',
+            'http://localhost:5174'
+        ].filter(Boolean).map(url => url.trim().replace(/\/$/, ''));
+
+        // Allow if origin matches env vars, or if it's running on Vercel
+        if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+            callback(null, origin); // Reflect the exact valid origin
+        } else {
+            console.log("Blocked by CORS:", origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true
 }));
 
