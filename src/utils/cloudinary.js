@@ -10,24 +10,24 @@ cloudinary.config({
 });
 
 export const uploadToCloudinary = async (filePath, folder = "portfolio") => {
-    // Check if the file is a PDF
+    
     const isPDF = filePath.toLowerCase().endsWith('.pdf');
     console.log(`[Cloudinary] Uploading file: ${filePath}, isPDF: ${isPDF}`);
 
-    // For PDFs, we just upload them as raw files without image transformations
+    
     let options;
     if (isPDF) {
         options = {
             folder,
-            resource_type: "raw", // CRITICAL for PDFs so they get '/raw/upload/' URL
+            resource_type: "raw", 
         };
     } else {
         options = {
             folder,
             resource_type: "auto",
-            format: "webp",       // Convert everything to WebP for smaller size
-            quality: "auto:eco",  // Aggressive compression that looks good
-            fetch_format: "auto", // Delivery optimization
+            format: "webp",       
+            quality: "auto:eco",  
+            fetch_format: "auto", 
         };
     }
 

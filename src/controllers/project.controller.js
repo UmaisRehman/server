@@ -2,7 +2,7 @@ import Project from "../models/project.model.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import fs from "fs";
 
-// GET all projects (public)
+
 export const getAllProjects = async (req, res) => {
     try {
         const projects = await Project.find().sort({ order: 1, createdAt: -1 });
@@ -12,7 +12,7 @@ export const getAllProjects = async (req, res) => {
     }
 };
 
-// GET single project (public)
+
 export const getProjectById = async (req, res) => {
     try {
         const project = await Project.findById(req.params.id);
@@ -23,7 +23,7 @@ export const getProjectById = async (req, res) => {
     }
 };
 
-// POST create project (admin)
+
 export const createProject = async (req, res) => {
     try {
         const { title, description, techStack, liveUrl, githubUrl, category, featured, order } = req.body;
@@ -35,7 +35,7 @@ export const createProject = async (req, res) => {
             const result = await uploadToCloudinary(req.file.path, "portfolio/projects");
             thumbnail = result.url;
             thumbnailPublicId = result.publicId;
-            // Clean up temp file
+            
             fs.unlinkSync(req.file.path);
         }
 
@@ -59,7 +59,7 @@ export const createProject = async (req, res) => {
     }
 };
 
-// PUT update project (admin)
+
 export const updateProject = async (req, res) => {
     try {
         const project = await Project.findById(req.params.id);
@@ -67,9 +67,9 @@ export const updateProject = async (req, res) => {
 
         const { title, description, techStack, liveUrl, githubUrl, category, featured, order } = req.body;
 
-        // Handle new thumbnail upload
+        
         if (req.file) {
-            // Delete old thumbnail from Cloudinary
+            
             await deleteFromCloudinary(project.thumbnailPublicId);
 
             const result = await uploadToCloudinary(req.file.path, "portfolio/projects");
@@ -95,13 +95,13 @@ export const updateProject = async (req, res) => {
     }
 };
 
-// DELETE project (admin)
+
 export const deleteProject = async (req, res) => {
     try {
         const project = await Project.findById(req.params.id);
         if (!project) return res.status(404).json({ message: "Project not found" });
 
-        // Delete thumbnail from Cloudinary
+        
         await deleteFromCloudinary(project.thumbnailPublicId);
 
         await Project.findByIdAndDelete(req.params.id);

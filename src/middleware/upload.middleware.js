@@ -4,11 +4,11 @@ import fs from "fs";
 
 import os from 'os';
 
-// Use the OS temp directory (which is /tmp on Vercel/Linux and temp folder on Windows)
-// Vercel only allows writing to the /tmp directory
+
+
 const uploadsDir = process.env.VERCEL ? "/tmp" : path.join(process.cwd(), "uploads");
 
-// Ensure directory exists only if NOT on Vercel (Vercel's /tmp always exists)
+
 if (!process.env.VERCEL && !fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -38,5 +38,5 @@ const fileFilter = (req, file, cb) => {
 export const upload = multer({
     storage,
     fileFilter,
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+    limits: { fileSize: 10 * 1024 * 1024 } 
 });

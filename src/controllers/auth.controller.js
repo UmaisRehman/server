@@ -14,7 +14,7 @@ const generateRefreshToken = (admin) => {
     });
 };
 
-// Step 1: Validate email (password optional) → Send OTP
+
 export const loginAdmin = async (req, res) => {
     const { email, password } = req.body;
 
@@ -24,16 +24,16 @@ export const loginAdmin = async (req, res) => {
         const inputEmail = email.toLowerCase();
         const allowedEmail = process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.toLowerCase() : null;
 
-        // Security Check: Only allow the ONE specific admin email defined in .env
+        
         if (!allowedEmail || inputEmail !== allowedEmail) {
-            // Send back a generic message to prevent attackers from knowing if the email exists
+            
             return res.status(401).json({ message: "Unauthorized: You are not the admin of this portfolio." });
         }
 
         let admin = await Admin.findOne({ email: inputEmail });
 
         if (!admin) {
-            // First time login: Auto-create the admin account since it matches the .env allowed email
+            
             const randomPassword = Math.random().toString(36).slice(-10);
             admin = new Admin({
                 email: inputEmail,
@@ -41,18 +41,18 @@ export const loginAdmin = async (req, res) => {
             });
             await admin.save();
         } else if (password) {
-            // If they provided a password, verify it
+            
             const isPasswordValid = await admin.comparePassword(password);
             if (!isPasswordValid) return res.status(401).json({ message: "Invalid password" });
         }
 
-        // Generate OTP and save
+        
         const otpCode = generateOTP();
         admin.otpCode = otpCode;
-        admin.otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+        admin.otpExpiry = new Date(Date.now() + 5 * 60 * 1000); 
         await admin.save();
 
-        // Send OTP email
+        
         await sendOTPEmail(email, otpCode);
 
         res.json({ message: "OTP sent to your email", email });
@@ -65,7 +65,7 @@ export const loginAdmin = async (req, res) => {
     }
 };
 
-// Step 2: Verify OTP → Return tokens
+
 export const verifyOTP = async (req, res) => {
     const { email, otp } = req.body;
 
@@ -75,16 +75,16 @@ export const verifyOTP = async (req, res) => {
         const admin = await Admin.findOne({ email: email.toLowerCase() });
         if (!admin) return res.status(401).json({ message: "Invalid credentials" });
 
-        // Check OTP
+        
         if (admin.otpCode !== otp) return res.status(401).json({ message: "Invalid OTP" });
         if (admin.otpExpiry < new Date()) return res.status(401).json({ message: "OTP expired" });
 
-        // Clear OTP
+        
         admin.otpCode = null;
         admin.otpExpiry = null;
         await admin.save();
 
-        // Generate tokens
+        
         const accessToken = generateAccessToken(admin);
         const refreshToken = generateRefreshToken(admin);
 
@@ -92,7 +92,7 @@ export const verifyOTP = async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            maxAge: 7 * 24 * 60 * 60 * 1000 
         });
 
         res.json({
@@ -106,13 +106,13 @@ export const verifyOTP = async (req, res) => {
     }
 };
 
-// Logout
+
 export const logoutAdmin = async (req, res) => {
     res.clearCookie("refreshToken");
     res.json({ message: "Logged out successfully" });
 };
 
-// Refresh token
+
 export const refreshToken = async (req, res) => {
     const token = req.cookies.refreshToken || req.body.refreshToken;
     if (!token) return res.status(401).json({ message: "No refresh token found" });
@@ -129,7 +129,7 @@ export const refreshToken = async (req, res) => {
     }
 };
 
-// Check auth status
+
 export const checkAuth = async (req, res) => {
     try {
         const admin = await Admin.findById(req.admin.id).select("-password -otpCode -otpExpiry");
@@ -140,7 +140,7 @@ export const checkAuth = async (req, res) => {
     }
 };
 
-// Update password
+
 export const updatePassword = async (req, res) => {
     const { newPassword } = req.body;
 

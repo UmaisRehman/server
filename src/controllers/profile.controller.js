@@ -2,7 +2,7 @@ import Profile from "../models/profile.model.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import fs from "fs";
 
-// GET profile (public)
+
 export const getProfile = async (req, res) => {
     try {
         let profile = await Profile.findOne();
@@ -15,7 +15,7 @@ export const getProfile = async (req, res) => {
     }
 };
 
-// PUT update profile (admin)
+
 export const updateProfile = async (req, res) => {
     try {
         let profile = await Profile.findOne();
@@ -34,7 +34,7 @@ export const updateProfile = async (req, res) => {
         if (website !== undefined) profile.website = website;
         if (skills !== undefined) profile.skills = typeof skills === 'string' ? JSON.parse(skills) : skills;
 
-        // Handle avatar upload
+        
         if (req.files?.avatar?.[0]) {
             await deleteFromCloudinary(profile.avatarPublicId);
             const result = await uploadToCloudinary(req.files.avatar[0].path, "portfolio/profile");
@@ -51,7 +51,7 @@ export const updateProfile = async (req, res) => {
     }
 };
 
-// POST upload/update resume (admin)
+
 export const uploadResume = async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ message: "Resume file is required" });
@@ -59,10 +59,10 @@ export const uploadResume = async (req, res) => {
         let profile = await Profile.findOne();
         if (!profile) profile = new Profile();
 
-        // Delete old resume from Cloudinary
+        
         await deleteFromCloudinary(profile.resumePublicId);
 
-        // Upload new resume
+        
         console.log("Resume file path:", req.file.path);
         console.log("Resume original name:", req.file.originalname);
         const result = await uploadToCloudinary(req.file.path, "portfolio/resume");

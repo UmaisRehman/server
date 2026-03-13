@@ -15,7 +15,7 @@ app.use(cors({
     origin: function (origin, callback) {
         if (!origin) return callback(null, true);
 
-        // Normalize allowed origins by removing trailing slashes
+        
         const allowedOrigins = [
             process.env.CLIENT_URL,
             process.env.ADMIN_URL,
@@ -25,7 +25,7 @@ app.use(cors({
 
         // Allow if origin matches env vars, or if it's running on Vercel
         if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-            callback(null, origin); // Reflect the exact valid origin
+            callback(null, origin); 
         } else {
             console.log("Blocked by CORS:", origin);
             callback(new Error('Not allowed by CORS'));
@@ -39,7 +39,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/profile', profileRoutes);

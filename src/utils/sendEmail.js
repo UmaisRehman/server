@@ -1,8 +1,8 @@
 import nodemailer from "nodemailer";
 
 export const sendOTPEmail = async (toEmail, otpCode) => {
-  // Moved transporter inside the function to ensure process.env variables 
-  // are loaded by dotenv BEFORE we try to access EMAIL_USER and EMAIL_PASS
+  
+  
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
