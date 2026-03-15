@@ -1,112 +1,122 @@
 import Project from "../models/project.model.js";
+import Admin from "../models/admin.model.js";
 import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
+import ApiError from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
 import fs from "fs";
 
+export const getAllProjects = asyncHandler(async (req, res) => {
+    const projects = await Project.find({ userId: req.admin.id }).sort({ order: 1, createdAt: -1 });
+    res.json({ success: true, projects });
+});
 
-export const getAllProjects = async (req, res) => {
-    try {
-        const projects = await Project.find().sort({ order: 1, createdAt: -1 });
-        res.json({ projects });
-    } catch (error) {
-        res.status(500).json({ message: "Internal server error" });
+export const getPublicProjects = asyncHandler(async (req, res) => {
+    const { username } = req.params;
+
+    if (!username) {
+        throw new ApiError(400, "Username is required", "MISSING_USERNAME");
     }
-};
 
-
-export const getProjectById = async (req, res) => {
-    try {
-        const project = await Project.findById(req.params.id);
-        if (!project) return res.status(404).json({ message: "Project not found" });
-        res.json({ project });
-    } catch (error) {
-        res.status(500).json({ message: "Internal server error" });
+    const admin = await Admin.findOne({ username: username.toLowerCase() });
+    if (!admin) {
+        throw new ApiError(404, "Portfolio not found. This username does not exist.", "USER_NOT_FOUND");
     }
-};
 
+    const projects = await Project.find({ userId: admin._id }).sort({ order: 1, createdAt: -1 });
+    res.json({ success: true, projects });
+});
 
-export const createProject = async (req, res) => {
-    try {
-        const { title, description, techStack, liveUrl, githubUrl, category, featured, order } = req.body;
+export const getProjectById = asyncHandler(async (req, res) => {
+    const project = await Project.findOne({ _id: req.params.id, userId: req.admin.id });
 
-        let thumbnail = "";
-        let thumbnailPublicId = "";
-
-        if (req.file) {
-            const result = await uploadToCloudinary(req.file.path, "portfolio/projects");
-            thumbnail = result.url;
-            thumbnailPublicId = result.publicId;
-            
-            fs.unlinkSync(req.file.path);
-        }
-
-        const project = await Project.create({
-            title,
-            description,
-            techStack: techStack ? (typeof techStack === 'string' ? JSON.parse(techStack) : techStack) : [],
-            liveUrl,
-            githubUrl,
-            thumbnail,
-            thumbnailPublicId,
-            category,
-            featured: featured === 'true' || featured === true,
-            order: order ? Number(order) : 0
-        });
-
-        res.status(201).json({ message: "Project created", project });
-    } catch (error) {
-        console.error("Create project error:", error);
-        res.status(500).json({ message: "Internal server error" });
+    if (!project) {
+        throw new ApiError(404, "Project not found", "PROJECT_NOT_FOUND");
     }
-};
 
+    res.json({ success: true, project });
+});
 
-export const updateProject = async (req, res) => {
-    try {
-        const project = await Project.findById(req.params.id);
-        if (!project) return res.status(404).json({ message: "Project not found" });
+export const createProject = asyncHandler(async (req, res) => {
+    const { title, description, techStack, liveUrl, githubUrl, category, featured, order } = req.body;
 
-        const { title, description, techStack, liveUrl, githubUrl, category, featured, order } = req.body;
+    if (!title || !title.trim()) {
+        throw new ApiError(400, "Project title is required", "MISSING_TITLE");
+    }
 
-        
-        if (req.file) {
-            
+    if (!description || !description.trim()) {
+        throw new ApiError(400, "Project description is required", "MISSING_DESCRIPTION");
+    }
+
+    let thumbnail = "";
+    let thumbnailPublicId = "";
+
+    if (req.file) {
+        const result = await uploadToCloudinary(req.file.path, "portfolio/projects");
+        thumbnail = result.url;
+        thumbnailPublicId = result.publicId;
+        try { fs.unlinkSync(req.file.path); } catch (e) { /* temp file cleanup */ }
+    }
+
+    const project = await Project.create({
+        userId: req.admin.id,
+        title: title.trim(),
+        description: description.trim(),
+        techStack: techStack ? (typeof techStack === "string" ? JSON.parse(techStack) : techStack) : [],
+        liveUrl: liveUrl || "",
+        githubUrl: githubUrl || "",
+        thumbnail,
+        thumbnailPublicId,
+        category: category || "Web App",
+        featured: featured === "true" || featured === true,
+        order: order ? Number(order) : 0
+    });
+
+    res.status(201).json({ success: true, message: "Project created", project });
+});
+
+export const updateProject = asyncHandler(async (req, res) => {
+    const project = await Project.findOne({ _id: req.params.id, userId: req.admin.id });
+
+    if (!project) {
+        throw new ApiError(404, "Project not found or you don't have permission to edit it", "PROJECT_NOT_FOUND");
+    }
+
+    const { title, description, techStack, liveUrl, githubUrl, category, featured, order } = req.body;
+
+    if (req.file) {
+        if (project.thumbnailPublicId) {
             await deleteFromCloudinary(project.thumbnailPublicId);
-
-            const result = await uploadToCloudinary(req.file.path, "portfolio/projects");
-            project.thumbnail = result.url;
-            project.thumbnailPublicId = result.publicId;
-            fs.unlinkSync(req.file.path);
         }
-
-        if (title !== undefined) project.title = title;
-        if (description !== undefined) project.description = description;
-        if (techStack !== undefined) project.techStack = typeof techStack === 'string' ? JSON.parse(techStack) : techStack;
-        if (liveUrl !== undefined) project.liveUrl = liveUrl;
-        if (githubUrl !== undefined) project.githubUrl = githubUrl;
-        if (category !== undefined) project.category = category;
-        if (featured !== undefined) project.featured = featured === 'true' || featured === true;
-        if (order !== undefined) project.order = Number(order);
-
-        await project.save();
-        res.json({ message: "Project updated", project });
-    } catch (error) {
-        console.error("Update project error:", error);
-        res.status(500).json({ message: "Internal server error" });
+        const result = await uploadToCloudinary(req.file.path, "portfolio/projects");
+        project.thumbnail = result.url;
+        project.thumbnailPublicId = result.publicId;
+        try { fs.unlinkSync(req.file.path); } catch (e) { /* temp file cleanup */ }
     }
-};
 
+    if (title !== undefined) project.title = title.trim();
+    if (description !== undefined) project.description = description.trim();
+    if (techStack !== undefined) project.techStack = typeof techStack === "string" ? JSON.parse(techStack) : techStack;
+    if (liveUrl !== undefined) project.liveUrl = liveUrl;
+    if (githubUrl !== undefined) project.githubUrl = githubUrl;
+    if (category !== undefined) project.category = category;
+    if (featured !== undefined) project.featured = featured === "true" || featured === true;
+    if (order !== undefined) project.order = Number(order);
 
-export const deleteProject = async (req, res) => {
-    try {
-        const project = await Project.findById(req.params.id);
-        if (!project) return res.status(404).json({ message: "Project not found" });
+    await project.save();
+    res.json({ success: true, message: "Project updated", project });
+});
 
-        
+export const deleteProject = asyncHandler(async (req, res) => {
+    const project = await Project.findOne({ _id: req.params.id, userId: req.admin.id });
+
+    if (!project) {
+        throw new ApiError(404, "Project not found or you don't have permission to delete it", "PROJECT_NOT_FOUND");
+    }
+
+    if (project.thumbnailPublicId) {
         await deleteFromCloudinary(project.thumbnailPublicId);
-
-        await Project.findByIdAndDelete(req.params.id);
-        res.json({ message: "Project deleted" });
-    } catch (error) {
-        res.status(500).json({ message: "Internal server error" });
     }
-};
+
+    await Project.findByIdAndDelete(project._id);
+    res.json({ success: true, message: "Project deleted" });
+});

@@ -2,14 +2,20 @@ import mongoose from "mongoose";
 
 const projectSchema = new mongoose.Schema(
     {
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Admin",
+            required: [true, "User ID is required"],
+            index: true
+        },
         title: {
             type: String,
-            required: [true, "title is required"],
+            required: [true, "Title is required"],
             trim: true
         },
         description: {
             type: String,
-            required: [true, "description is required"]
+            required: [true, "Description is required"]
         },
         techStack: {
             type: [String],

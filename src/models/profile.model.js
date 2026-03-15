@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const profileSchema = new mongoose.Schema(
     {
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Admin",
+            required: [true, "User ID is required"],
+            index: true
+        },
         name: {
             type: String,
             default: "Your Name"
