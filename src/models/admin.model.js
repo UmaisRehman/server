@@ -45,8 +45,6 @@ const adminSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-adminSchema.index({ email: 1 });
-adminSchema.index({ username: 1 });
 
 adminSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
