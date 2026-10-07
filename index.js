@@ -8,6 +8,8 @@ import authRoutes from "./src/routes/auth.routes.js";
 import projectRoutes from "./src/routes/project.routes.js";
 import profileRoutes from "./src/routes/profile.routes.js";
 import contactRoutes from "./src/routes/contact.routes.js";
+import portfolioConfigRoutes from "./src/routes/portfolioConfig.routes.js";
+import aiRoutes from "./src/routes/ai.routes.js";
 import errorHandler from "./src/middleware/errorHandler.js";
 import dotenv from "dotenv";
 
@@ -89,6 +91,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/portfolio-config', portfolioConfigRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.get('/', (req, res) => {
     res.json({ success: true, message: 'Portfolio API is running 🚀' });
